@@ -57,9 +57,9 @@ def y1_signal(t: np.ndarray, a1=1.0, a2=0.5, omega1=2 * np.pi * 5, omega2=2 * np
     return harmonic_signal(t, a1, omega1, phi1) + harmonic_signal(t, a2, omega2, phi2)
 
 
-def y2_signal(t: np.ndarray, b=2 * np.pi * 8, phi=0) -> np.ndarray:
+def y2_signal(t: np.ndarray, B=5.0) -> np.ndarray:
     """
-    y2(t) = sin(b*t)
-    Частота: 8 Гц
+    y2(t) = sinc(2*B*t) согласно заданию.
+    Полоса спектра строго ограничена частотой B Гц.
     """
-    return harmonic_signal(t, 1.0, b, phi)
+    return np.sinc(2 * B * t)

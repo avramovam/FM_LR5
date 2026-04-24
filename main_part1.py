@@ -1,22 +1,14 @@
-"""
-Основной скрипт для выполнения лабораторной работы №5
-Тема: Связь непрерывного и дискретного преобразования Фурье
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# Импорт модулей
 from config import ALL_CONFIGS
 from signals import rect_pulse, rect_pulse_analytic_fourier
 from fourier_methods import FourierMethods
 
-# Создание директории для результатов
 RESULTS_DIR = Path("results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
-# Настройка стиля для крупных жирных подписей (A4-friendly)
 plt.rcParams.update({
     'font.size': 20,
     'axes.titlesize': 22,
@@ -25,8 +17,6 @@ plt.rcParams.update({
     'xtick.labelsize': 18,
     'ytick.labelsize': 18,
     'legend.fontsize': 18,
-    'legend.title_fontsize': 18,
-    'legend.handlelength': 2.5,
     'figure.titlesize': 24,
     'figure.dpi': 150,
     'savefig.dpi': 300,
@@ -36,22 +26,18 @@ plt.rcParams.update({
 
 
 def run_experiment(config):
-    """Запуск эксперимента для заданной конфигурации"""
     print(f"\n{'='*60}")
     print(f"Эксперимент: {config.name}")
     print(f"T = {config.T} с, dt = {config.dt} с")
     print(f"N = {config.N} точек, fs = {1/config.dt:.2f} Гц")
     print(f"{'='*60}")
 
-    # Создание временной сетки
     t = np.arange(-config.T/2, config.T/2, config.dt)
     signal = rect_pulse(t)
 
-    # Аналитический Фурье-образ
     nu_analytic = np.linspace(-10, 10, 2000)
     fourier_analytic = rect_pulse_analytic_fourier(nu_analytic)
 
-    # Методы FFT
     fourier_methods = FourierMethods(t, signal)
     nu_trapz = np.linspace(-10, 10, 1000)
     fourier_trapz = fourier_methods.method_trapz(nu_trapz)
@@ -59,20 +45,17 @@ def run_experiment(config):
     nu_fft, f_hat_unitary, recovered_unitary = fourier_methods.method_unitary_fft()
     nu_fft, f_hat_smart, recovered_smart = fourier_methods.method_smart_fft()
 
-    # Ошибка аппроксимации спектра
-    from scipy.interpolate import interp1d
-    f_smart_mag = np.abs(f_hat_smart)
-    interp_func = interp1d(nu_fft, f_smart_mag, kind='linear',
-                           bounds_error=False, fill_value=0)
-    f_smart_interp = interp_func(nu_analytic)
-    spectrum_error = np.mean((np.abs(fourier_analytic) - f_smart_interp)**2)
-
-    # Восстановление через trapz для дополнительного графика
     recovered_trapz = np.zeros_like(t, dtype=complex)
     for i, t_val in enumerate(t):
         integrand = fourier_trapz * np.exp(2j * np.pi * nu_trapz * t_val)
         recovered_trapz[i] = np.trapz(integrand, nu_trapz)
     recovered_trapz = recovered_trapz.real
+
+    from scipy.interpolate import interp1d
+    f_smart_mag = np.abs(f_hat_smart)
+    interp_func = interp1d(nu_fft, f_smart_mag, kind='linear', bounds_error=False, fill_value=0)
+    f_smart_interp = interp_func(nu_analytic)
+    spectrum_error = np.mean((np.abs(fourier_analytic) - f_smart_interp)**2)
 
     results = {
         'config': config,
@@ -102,10 +85,7 @@ def run_experiment(config):
     return results
 
 
-# ========== БАЗОВЫЕ ГРАФИКИ ДЛЯ ВСЕХ КОНФИГУРАЦИЙ ==========
-
 def plot_signal(results, suffix=""):
-    """График 1: Исходный сигнал Π(t)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     ax.plot(results['t'], results['signal'], 'b-', linewidth=2.5)
     ax.set_xlabel('Время $t$, с', fontsize=20, fontweight='bold')
@@ -120,7 +100,6 @@ def plot_signal(results, suffix=""):
 
 
 def plot_analytic_spectrum(results, suffix=""):
-    """График 2: Аналитический Фурье-образ |sinc(πν)|"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask = np.abs(results['nu_analytic']) <= nu_lim
@@ -136,7 +115,6 @@ def plot_analytic_spectrum(results, suffix=""):
 
 
 def plot_analytic_vs_trapz(results, suffix=""):
-    """График 3: Аналитический vs численное интегрирование (trapz)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -144,7 +122,7 @@ def plot_analytic_vs_trapz(results, suffix=""):
     ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
             'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
     ax.plot(results['nu_trapz'][mask_trapz], np.abs(results['fourier_trapz'][mask_trapz]),
-            'b--', linewidth=2.0, label='Trapz (численное интегрирование)', alpha=0.7)
+            'b--', linewidth=2.0, label='Trapz', alpha=0.7)
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
     ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
@@ -157,7 +135,6 @@ def plot_analytic_vs_trapz(results, suffix=""):
 
 
 def plot_naive_fft(results, suffix=""):
-    """График 4: Naive FFT vs аналитический"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -165,7 +142,7 @@ def plot_naive_fft(results, suffix=""):
     ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
             'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
     ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
-            'g--', linewidth=2.0, label='Naive FFT (без масштаба)', alpha=0.7)
+            'g--', linewidth=2.0, label='Naive FFT', alpha=0.7)
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
     ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
@@ -178,7 +155,6 @@ def plot_naive_fft(results, suffix=""):
 
 
 def plot_unitary_fft(results, suffix=""):
-    """График 5: Unitary FFT vs аналитический"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -186,7 +162,7 @@ def plot_unitary_fft(results, suffix=""):
     ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
             'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
     ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
-            'm-.', linewidth=2.0, label='Unitary FFT (1/√N)', alpha=0.7)
+            'm-.', linewidth=2.0, label='Unitary FFT', alpha=0.7)
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
     ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
@@ -199,7 +175,6 @@ def plot_unitary_fft(results, suffix=""):
 
 
 def plot_analytic_vs_smart(results, suffix=""):
-    """График 6: Аналитический vs Smart FFT"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -207,7 +182,7 @@ def plot_analytic_vs_smart(results, suffix=""):
     ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
             'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
     ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r--', linewidth=2.0, label='Smart FFT (с коэффициентом dt)', alpha=0.7)
+            'r--', linewidth=2.0, label='Smart FFT', alpha=0.7)
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
     ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
@@ -220,14 +195,13 @@ def plot_analytic_vs_smart(results, suffix=""):
 
 
 def plot_all_methods_comparison(results, suffix=""):
-    """График 7: Сравнение всех методов DFT"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
     mask_trapz = np.abs(results['nu_trapz']) <= nu_lim
     ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический (эталон)', alpha=0.9)
+            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
     ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
             'g--', linewidth=2.0, label='Naive FFT', alpha=0.7)
     ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
@@ -248,19 +222,18 @@ def plot_all_methods_comparison(results, suffix=""):
 
 
 def plot_accuracy_comparison(results, suffix=""):
-    """График 8: Детальное сравнение точности (увеличенный фрагмент)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 2
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
     ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
             'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
-            'g--', linewidth=2.0, label='Naive FFT', alpha=0.7)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
-            'm-.', linewidth=2.0, label='Unitary FFT', alpha=0.7)
     ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
             'r-', linewidth=2.0, label='Smart FFT', alpha=0.8)
+    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
+            'g--', linewidth=1.5, label='Naive FFT', alpha=0.5)
+    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
+            'm-.', linewidth=1.5, label='Unitary FFT', alpha=0.5)
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
     ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
@@ -273,7 +246,6 @@ def plot_accuracy_comparison(results, suffix=""):
 
 
 def plot_reconstruction_smart(results, suffix=""):
-    """График 9: Восстановление сигнала (Smart FFT)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     t_center_mask = np.abs(results['t']) <= 2
     ax.plot(results['t'][t_center_mask], results['signal'][t_center_mask],
@@ -290,26 +262,33 @@ def plot_reconstruction_smart(results, suffix=""):
     plt.close(fig)
 
 
-def plot_reconstruction_trapz(results, suffix=""):
-    """График 10: Восстановление сигнала (trapz)"""
+def plot_smart_vs_trapz_vs_analytic(results, suffix="", save=True):
     fig, ax = plt.subplots(figsize=(14, 8))
-    t_center_mask = np.abs(results['t']) <= 2
-    ax.plot(results['t'][t_center_mask], results['signal'][t_center_mask],
-            'k-', linewidth=2.5, label='Исходный сигнал', alpha=0.9)
-    ax.plot(results['t'][t_center_mask], results['recovered_trapz'][t_center_mask],
-            'b--', linewidth=2.0, label='Восстановленный (trapz)', alpha=0.7)
-    ax.set_xlabel('Время $t$, с', fontsize=20, fontweight='bold')
-    ax.set_ylabel('Амплитуда', fontsize=20, fontweight='bold')
+    nu_lim = 10
+    mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
+    mask_fft = np.abs(results['nu_fft']) <= nu_lim
+    mask_trapz = np.abs(results['nu_trapz']) <= nu_lim
+
+    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
+    ax.plot(results['nu_trapz'][mask_trapz], np.abs(results['fourier_trapz'][mask_trapz]),
+            'b--', linewidth=2.0, label='Trapz', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT', alpha=0.8)
+
+    ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
-    fig.savefig(RESULTS_DIR / f"{suffix}_trapz_reconstruction.png", dpi=300, bbox_inches='tight')
+
+    if save:
+        fig.savefig(RESULTS_DIR / f"{suffix}_smart_vs_trapz_zoom.png", dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-
 def plot_reconstruction_error(results, suffix=""):
-    """График 11: Ошибка восстановления (Smart FFT)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     t_center_mask = np.abs(results['t']) <= 2
     error = results['signal'][t_center_mask] - results['recovered_smart'][t_center_mask]
@@ -327,7 +306,6 @@ def plot_reconstruction_error(results, suffix=""):
 
 
 def plot_recovery_error_comparison(results, suffix=""):
-    """График 12: Сравнение ошибок восстановления всех методов"""
     fig, ax = plt.subplots(figsize=(14, 8))
     t_center_mask = np.abs(results['t']) <= 2
     error_naive = results['signal'][t_center_mask] - results['recovered_naive'][t_center_mask]
@@ -351,7 +329,6 @@ def plot_recovery_error_comparison(results, suffix=""):
 
 
 def plot_log_spectrum(results, suffix=""):
-    """График 13: Логарифмический спектр (Smart FFT)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
@@ -369,7 +346,6 @@ def plot_log_spectrum(results, suffix=""):
 
 
 def plot_all_methods_full(results, suffix=""):
-    """График 14: Все методы на одном графике (полный обзор)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -396,10 +372,7 @@ def plot_all_methods_full(results, suffix=""):
     plt.close(fig)
 
 
-# ========== ГРАФИКИ ДЛЯ ПРОБЛЕМНЫХ СЛУЧАЕВ ==========
-
 def plot_low_resolution_spectrum(results, suffix=""):
-    """График 15: Низкое частотное разрешение (ступенчатый спектр)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
@@ -415,7 +388,6 @@ def plot_low_resolution_spectrum(results, suffix=""):
 
 
 def plot_low_resolution_comparison(results, suffix=""):
-    """График 16: Сравнение с аналитическим при низком разрешении"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -436,7 +408,6 @@ def plot_low_resolution_comparison(results, suffix=""):
 
 
 def plot_aliasing_spectrum(results, suffix=""):
-    """График 15: Алиасинг (спектр с частотой Найквиста)"""
     config = results['config']
     fs = 1 / config.dt
     nyquist = fs / 2
@@ -458,7 +429,6 @@ def plot_aliasing_spectrum(results, suffix=""):
 
 
 def plot_aliasing_comparison(results, suffix=""):
-    """График 16: Сравнение с аналитическим при алиасинге"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -479,7 +449,6 @@ def plot_aliasing_comparison(results, suffix=""):
 
 
 def plot_zoom_spectrum(results, suffix=""):
-    """График 17: Увеличенный фрагмент спектра"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 2
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
@@ -495,7 +464,6 @@ def plot_zoom_spectrum(results, suffix=""):
 
 
 def plot_zoom_comparison(results, suffix=""):
-    """График 18: Сравнение с аналитическим в увеличенном масштабе"""
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 2
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
@@ -515,10 +483,7 @@ def plot_zoom_comparison(results, suffix=""):
     plt.close(fig)
 
 
-# ========== СВОДНЫЕ ГРАФИКИ ==========
-
 def plot_errors_summary(all_results):
-    """Сводный график: Ошибки аппроксимации спектра"""
     fig, ax = plt.subplots(figsize=(16, 10))
     config_names = [r['config'].name for r in all_results]
     errors = [r['spectrum_error'] for r in all_results]
@@ -540,7 +505,6 @@ def plot_errors_summary(all_results):
 
 
 def plot_all_spectra_comparison(all_results):
-    """Сводный график: Сравнение спектров всех конфигураций"""
     fig, ax = plt.subplots(figsize=(16, 10))
     nu_lim = 10
     colors = ['blue', 'green', 'orange', 'red', 'purple']
@@ -563,8 +527,6 @@ def plot_all_spectra_comparison(all_results):
 
 
 def plot_parameter_influence(all_results):
-    """Сводный график: Влияние параметров T и dt на ошибку"""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
     configs = [r['config'] for r in all_results]
     T_values = [cfg.T for cfg in configs]
     dt_values = [cfg.dt for cfg in configs]
@@ -572,34 +534,39 @@ def plot_parameter_influence(all_results):
     colors = ['green' if e < 1e-6 else 'orange' if e < 1e-3 else 'red' for e in errors]
     names = [cfg.name for cfg in configs]
 
-    ax1.scatter(T_values, errors, s=150, c=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
+    fig1, ax1 = plt.subplots(figsize=(14, 8))
     for i, name in enumerate(names):
-        ax1.annotate(name, (T_values[i], errors[i]), fontsize=14, ha='center', va='bottom', fontweight='bold')
-    ax1.set_xlabel('Промежуток времени T, с', fontsize=18, fontweight='bold')
-    ax1.set_ylabel('Ошибка спектра (MSE)', fontsize=18, fontweight='bold')
+        ax1.scatter(T_values[i], errors[i], s=150, color=colors[i], alpha=0.7,
+                    edgecolors='black', linewidth=1.5, label=name, zorder=5)
+    ax1.set_xlabel('Промежуток времени T, с', fontsize=20, fontweight='bold')
+    ax1.set_ylabel('Ошибка спектра (MSE)', fontsize=20, fontweight='bold')
     ax1.set_yscale('log')
-    ax1.tick_params(axis='both', labelsize=16)
+    ax1.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax1.grid(True, alpha=0.3, linestyle='--')
-    ax1.set_title('Влияние T на ошибку', fontsize=16, fontweight='bold')
+    ax1.set_title('Влияние T на ошибку', fontsize=20, fontweight='bold')
+    ax1.legend(fontsize=16, loc='best', framealpha=0.9, prop={'weight': 'bold'})
+    plt.tight_layout()
+    fig1.savefig(RESULTS_DIR / "parameter_influence_T.png", dpi=300, bbox_inches='tight')
+    plt.close(fig1)
 
-    ax2.scatter(dt_values, errors, s=150, c=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
+    fig2, ax2 = plt.subplots(figsize=(14, 8))
     for i, name in enumerate(names):
-        ax2.annotate(name, (dt_values[i], errors[i]), fontsize=14, ha='center', va='bottom', fontweight='bold')
-    ax2.set_xlabel('Шаг дискретизации Δt, с', fontsize=18, fontweight='bold')
-    ax2.set_ylabel('Ошибка спектра (MSE)', fontsize=18, fontweight='bold')
+        ax2.scatter(dt_values[i], errors[i], s=150, color=colors[i], alpha=0.7,
+                    edgecolors='black', linewidth=1.5, label=name, zorder=5)
+    ax2.set_xlabel('Шаг дискретизации Δt, с', fontsize=20, fontweight='bold')
+    ax2.set_ylabel('Ошибка спектра (MSE)', fontsize=20, fontweight='bold')
     ax2.set_xscale('log')
     ax2.set_yscale('log')
-    ax2.tick_params(axis='both', labelsize=16)
+    ax2.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax2.grid(True, alpha=0.3, linestyle='--')
-    ax2.set_title('Влияние Δt на ошибку', fontsize=16, fontweight='bold')
-
+    ax2.set_title('Влияние Δt на ошибку', fontsize=20, fontweight='bold')
+    ax2.legend(fontsize=16, loc='best', framealpha=0.9, prop={'weight': 'bold'})
     plt.tight_layout()
-    fig.savefig(RESULTS_DIR / "parameter_influence.png", dpi=300, bbox_inches='tight')
-    plt.close(fig)
+    fig2.savefig(RESULTS_DIR / "parameter_influence_dt.png", dpi=300, bbox_inches='tight')
+    plt.close(fig2)
 
 
 def plot_computational_complexity():
-    """Сводный график: Сравнение вычислительной сложности"""
     fig, ax = plt.subplots(figsize=(14, 8))
     N = np.array([100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000])
     trapz_complexity = N * 500
@@ -620,14 +587,10 @@ def plot_computational_complexity():
     plt.close(fig)
 
 
-# ========== ОСНОВНАЯ ФУНКЦИЯ ==========
-
 def plot_results_for_config(results):
-    """Построение всех графиков для конфигурации"""
     config = results['config']
-    suffix = config.name.replace(' ', '_').replace('-', '_').replace('ё', 'e').replace('___', '_')
+    suffix = config.name.replace(' ', '_').replace('-', '_').replace('ё', 'e')
 
-    # Базовые графики для всех конфигураций
     plot_signal(results, suffix)
     plot_analytic_spectrum(results, suffix)
     plot_analytic_vs_trapz(results, suffix)
@@ -637,13 +600,12 @@ def plot_results_for_config(results):
     plot_all_methods_comparison(results, suffix)
     plot_accuracy_comparison(results, suffix)
     plot_reconstruction_smart(results, suffix)
-    plot_reconstruction_trapz(results, suffix)
     plot_reconstruction_error(results, suffix)
     plot_recovery_error_comparison(results, suffix)
     plot_log_spectrum(results, suffix)
     plot_all_methods_full(results, suffix)
+    plot_smart_vs_trapz_vs_analytic(results, suffix)
 
-    # Дополнительные графики в зависимости от проблемы
     fs = 1 / config.dt
     nyquist = fs / 2
 
@@ -660,25 +622,17 @@ def plot_results_for_config(results):
 
 
 def main():
-    """Главная функция"""
-    print("="*60)
-    print("ЛАБОРАТОРНАЯ РАБОТА №5")
-    print("Тема: Связь непрерывного и дискретного преобразования Фурье")
-    print("="*60)
-
     all_results = []
     for config in ALL_CONFIGS:
         results = run_experiment(config)
         plot_results_for_config(results)
         all_results.append(results)
 
-    # Сводные графики
     plot_errors_summary(all_results)
     plot_all_spectra_comparison(all_results)
     plot_parameter_influence(all_results)
     plot_computational_complexity()
 
-    # Вывод таблицы
     print("\n" + "="*80)
     print("СВОДНАЯ ТАБЛИЦА РЕЗУЛЬТАТОВ")
     print("="*80)
@@ -690,47 +644,7 @@ def main():
         print(f"{cfg.name:<35} {cfg.T:<10.2f} {cfg.dt:<10.4f} {fs_half:<12.2f} {r['spectrum_error']:<15.2e}")
     print("="*80)
 
-    print("\n" + "="*60)
-    print("ТЕОРЕТИЧЕСКИЙ ВЫВОД ПОПРАВОЧНОГО КОЭФФИЦИЕНТА cm")
-    print("="*60)
-    print("""
-    Непрерывное преобразование Фурье:
-    
-        F(ν) = ∫_{-∞}^{∞} f(t) e^{-2πiνt} dt
-    
-    Аппроксимация суммой Римана на [-T/2, T/2]:
-    
-        F(ν) ≈ Σ_{n=0}^{N-1} f(t_n) e^{-2πiν t_n} Δt
-    
-    Дискретное преобразование Фурье:
-    
-        DFT[k] = Σ_{n=0}^{N-1} f(t_n) e^{-2πi kn/N}
-    
-    При ν_k = k/T и t_n = -T/2 + nΔt получаем:
-    
-        F(ν_k) ≈ Δt · DFT[k]
-    
-    Следовательно, поправочный коэффициент: cm = Δt
-    """)
-
-    print("\n" + "="*60)
-    print("ВЫВОДЫ")
-    print("="*60)
-    print("""
-    1. Аналитический Фурье-образ Π(t) равен sinc(ν) = sin(πν)/(πν).
-    
-    2. Smart FFT с коэффициентом cm = Δt правильно аппроксимирует непрерывное ПФ.
-    
-    3. Влияние параметров:
-       - T определяет частотное разрешение: Δν = 1/T
-       - Δt определяет max частоту: ν_max = 1/(2Δt) (теорема Котельникова)
-    
-    4. При нарушении теоремы Котельникова (Δt > 1/(2ν_max)) возникает алиасинг.
-    
-    5. При малом T спектр становится ступенчатым из-за низкого разрешения.
-    """)
-
-    print(f"\nРезультаты сохранены: {RESULTS_DIR.absolute()}")
+    print(f"\nРезультаты сохранены в: {RESULTS_DIR.absolute()}")
 
 
 if __name__ == "__main__":
