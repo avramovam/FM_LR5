@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from scipy.integrate import trapezoid
 
 from config import ALL_CONFIGS
 from signals import rect_pulse, rect_pulse_analytic_fourier
@@ -48,7 +49,7 @@ def run_experiment(config):
     recovered_trapz = np.zeros_like(t, dtype=complex)
     for i, t_val in enumerate(t):
         integrand = fourier_trapz * np.exp(2j * np.pi * nu_trapz * t_val)
-        recovered_trapz[i] = np.trapz(integrand, nu_trapz)
+        recovered_trapz[i] = trapezoid(integrand, nu_trapz)
     recovered_trapz = recovered_trapz.real
 
     from scipy.interpolate import interp1d
@@ -100,15 +101,33 @@ def plot_signal(results, suffix=""):
 
 
 def plot_analytic_spectrum(results, suffix=""):
-    fig, ax = plt.subplots(figsize=(14, 8))
+    """Построение аналитического спектра (амплитудный и фазовый)"""
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
     nu_lim = 10
     mask = np.abs(results['nu_analytic']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask], np.abs(results['fourier_analytic'][mask]), 'k-', linewidth=2.5)
-    ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
-    ax.set_xlim(-nu_lim, nu_lim)
-    ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
+    
+    # Амплитудный спектр
+    ax1.plot(results['nu_analytic'][mask], np.abs(results['fourier_analytic'][mask]), 'k-', linewidth=2.5)
+    ax1.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
+    ax1.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax1.set_xlim(-nu_lim, nu_lim)
+    ax1.tick_params(axis='both', labelsize=18, width=1.5, length=6)
+    ax1.grid(True, alpha=0.3, linestyle='--', linewidth=1)
+    ax1.set_title('Амплитудный спектр', fontsize=18, fontweight='bold')
+    
+    # Фазовый спектр
+    phase = np.angle(results['fourier_analytic'][mask])
+    ax2.plot(results['nu_analytic'][mask], phase, 'b-', linewidth=2.5)
+    ax2.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
+    ax2.set_ylabel('$\\arg(\\hat{\\Pi}(\\nu))$, рад', fontsize=20, fontweight='bold')
+    ax2.set_xlim(-nu_lim, nu_lim)
+    ax2.set_ylim(-np.pi, np.pi)
+    ax2.set_yticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+    ax2.set_yticklabels(['$-\\pi$', '$-\\pi/2$', '0', '$\\pi/2$', '$\\pi$'])
+    ax2.tick_params(axis='both', labelsize=18, width=1.5, length=6)
+    ax2.grid(True, alpha=0.3, linestyle='--', linewidth=1)
+    ax2.set_title('Фазовый спектр', fontsize=18, fontweight='bold')
+    
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_analytic_spectrum.png", dpi=300, bbox_inches='tight')
     plt.close(fig)

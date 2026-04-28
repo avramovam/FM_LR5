@@ -58,14 +58,21 @@ def dft_reconstruction(samples, t_samples, t_rec, B):
     return recovered
 
 
-def sinc_interpolation(samples, t_samples, t_rec, B):
+def sinc_interpolation(samples, t_samples, t_rec):
     """
-    Интерполяционная формула Котельникова (альтернативный метод)
+    Интерполяционная формула Котельникова
+    
+    f(t) = Σ f[n] * sinc((t - n*Ts)/Ts) = Σ f[n] * sinc(fs * (t - n*Ts))
+    
+    где Ts - шаг сэмплирования, fs = 1/Ts - частота сэмплирования
     """
+    Ts = t_samples[1] - t_samples[0]  # Шаг сэмплирования
+    fs = 1.0 / Ts  # Частота сэмплирования
+    
     recovered = np.zeros_like(t_rec, dtype=float)
 
     for i, t_val in enumerate(t_rec):
-        arg = 2 * B * (t_val - t_samples)
+        arg = fs * (t_val - t_samples)  # Правильный аргумент: fs * (t - n*Ts)
         sinc_vals = np.sinc(arg)
         recovered[i] = np.sum(samples * sinc_vals)
 
