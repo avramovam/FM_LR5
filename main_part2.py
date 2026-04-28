@@ -129,12 +129,23 @@ def plot_three_spectra_comparison(results, signal_name, dt_sample, save=True):
     mask_samp = np.abs(results['nu_samp']) <= nu_lim
     mask_rec = np.abs(results['nu_rec']) <= nu_lim
 
-    ax.plot(results['nu_cont'][mask_cont], np.abs(results['f_cont'][mask_cont]),
-            'b-', linewidth=2.0, label='Исходный сигнал', alpha=0.8)
-    ax.plot(results['nu_samp'][mask_samp], np.abs(results['f_samp'][mask_samp]),
-            'r--', linewidth=1.5, label='Сэмплированный', alpha=0.7)
-    ax.plot(results['nu_rec'][mask_rec], np.abs(results['f_rec'][mask_rec]),
-            'g-.', linewidth=1.5, label='Восстановленный', alpha=0.7)
+    # Исходный сигнал (Re и Im)
+    ax.plot(results['nu_cont'][mask_cont], np.real(results['f_cont'][mask_cont]),
+            'b-', linewidth=2.0, label='Исходный (Re)', alpha=0.8)
+    ax.plot(results['nu_cont'][mask_cont], np.imag(results['f_cont'][mask_cont]),
+            'b--', linewidth=1.5, label='Исходный (Im)', alpha=0.6)
+    
+    # Сэмплированный (Re и Im)
+    ax.plot(results['nu_samp'][mask_samp], np.real(results['f_samp'][mask_samp]),
+            'r-', linewidth=1.5, label='Сэмплированный (Re)', alpha=0.7)
+    ax.plot(results['nu_samp'][mask_samp], np.imag(results['f_samp'][mask_samp]),
+            'r--', linewidth=1.0, label='Сэмплированный (Im)', alpha=0.5)
+    
+    # Восстановленный (Re и Im)
+    ax.plot(results['nu_rec'][mask_rec], np.real(results['f_rec'][mask_rec]),
+            'g-', linewidth=1.5, label='Восстановленный (Re)', alpha=0.7)
+    ax.plot(results['nu_rec'][mask_rec], np.imag(results['f_rec'][mask_rec]),
+            'g--', linewidth=1.0, label='Восстановленный (Im)', alpha=0.5)
 
     # Вертикальные линии — ТЕОРЕТИЧЕСКАЯ полоса сигнала
     ax.axvline(x=B_theoretical, color='black', linestyle=':', linewidth=2.5,
@@ -148,7 +159,7 @@ def plot_three_spectra_comparison(results, signal_name, dt_sample, save=True):
     ax.axvline(x=-nyquist, color='red', linestyle='--', alpha=0.5, linewidth=1.5)
 
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{y}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{y}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=14, framealpha=0.9)
@@ -198,7 +209,7 @@ def plot_y1_continuous(save=True):
 
 
 def plot_y1_spectrum(save=True):
-    """Спектр сигнала y1(t)"""
+    """Спектр сигнала y1(t) (Re и Im)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     T_total = 10.0
     dt_fine = 0.001
@@ -209,16 +220,20 @@ def plot_y1_spectrum(save=True):
     nu_fft, f_hat, _ = fourier_methods.method_smart_fft()
     nu_lim = 20
     mask = np.abs(nu_fft) <= nu_lim
-    ax.plot(nu_fft[mask], np.abs(f_hat[mask]), 'b-', linewidth=2.0)
+    
+    # Действительная часть
+    ax.plot(nu_fft[mask], np.real(f_hat[mask]), 'b-', linewidth=2.0, label='Re')
+    ax.plot(nu_fft[mask], np.imag(f_hat[mask]), 'r--', linewidth=1.5, label='Im')
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{y}_1(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{y}_1(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
-    ax.axvline(x=5, color='red', linestyle='--', alpha=0.7, linewidth=2, label='5 Гц')
-    ax.axvline(x=-5, color='red', linestyle='--', alpha=0.7, linewidth=2)
-    ax.axvline(x=12, color='green', linestyle='--', alpha=0.7, linewidth=2, label='12 Гц')
-    ax.axvline(x=-12, color='green', linestyle='--', alpha=0.7, linewidth=2)
+    ax.axvline(x=5, color='green', linestyle='--', alpha=0.7, linewidth=2, label='5 Гц')
+    ax.axvline(x=-5, color='green', linestyle='--', alpha=0.7, linewidth=2)
+    ax.axvline(x=12, color='orange', linestyle='--', alpha=0.7, linewidth=2, label='12 Гц')
+    ax.axvline(x=-12, color='orange', linestyle='--', alpha=0.7, linewidth=2)
     ax.legend(loc='best', fontsize=16)
     plt.tight_layout()
     if save:
@@ -248,7 +263,7 @@ def plot_y2_continuous(save=True):
 
 
 def plot_y2_spectrum(save=True):
-    """Спектр сигнала y2(t)"""
+    """Спектр сигнала y2(t) (Re и Im)"""
     fig, ax = plt.subplots(figsize=(14, 8))
     T_total = 10.0
     dt_fine = 0.001
@@ -259,9 +274,13 @@ def plot_y2_spectrum(save=True):
     nu_fft, f_hat, _ = fourier_methods.method_smart_fft()
     nu_lim = 15
     mask = np.abs(nu_fft) <= nu_lim
-    ax.plot(nu_fft[mask], np.abs(f_hat[mask]), 'b-', linewidth=2.0)
+    
+    # Действительная часть
+    ax.plot(nu_fft[mask], np.real(f_hat[mask]), 'b-', linewidth=2.0, label='Re')
+    ax.plot(nu_fft[mask], np.imag(f_hat[mask]), 'r--', linewidth=1.5, label='Im')
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{y}_2(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{y}_2(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
@@ -365,17 +384,26 @@ def experiment_y1(dt_sample, T_sampling=10.0, T_display=5.0, save=True):
         nu_lim = 25
         mask_cont = np.abs(results['nu_cont']) <= nu_lim
         mask_rec = np.abs(results['nu_rec']) <= nu_lim
-        ax.plot(results['nu_cont'][mask_cont], np.abs(results['f_cont'][mask_cont]),
-                'b-', linewidth=2.0, label='Спектр исходного сигнала', alpha=0.7)
-        ax.plot(results['nu_rec'][mask_rec], np.abs(results['f_rec'][mask_rec]),
-                'r--', linewidth=2.0, label='Спектр восстановленного сигнала', alpha=0.7)
+        
+        # Исходный сигнал (Re и Im)
+        ax.plot(results['nu_cont'][mask_cont], np.real(results['f_cont'][mask_cont]),
+                'b-', linewidth=2.0, label='Исходный (Re)', alpha=0.7)
+        ax.plot(results['nu_cont'][mask_cont], np.imag(results['f_cont'][mask_cont]),
+                'b--', linewidth=1.5, label='Исходный (Im)', alpha=0.5)
+        
+        # Восстановленный сигнал (Re и Im)
+        ax.plot(results['nu_rec'][mask_rec], np.real(results['f_rec'][mask_rec]),
+                'r-', linewidth=2.0, label='Восстановленный (Re)', alpha=0.7)
+        ax.plot(results['nu_rec'][mask_rec], np.imag(results['f_rec'][mask_rec]),
+                'r--', linewidth=1.5, label='Восстановленный (Im)', alpha=0.5)
+        
         ax.axvline(x=nyquist, color='red', linestyle=':', alpha=0.7, linewidth=2,
                    label=f'Частота Найквиста = {nyquist:.2f} Гц')
         ax.axvline(x=-nyquist, color='red', linestyle=':', alpha=0.7, linewidth=2)
         ax.axvline(x=12, color='green', linestyle='--', alpha=0.5, linewidth=1.5, label='12 Гц')
         ax.axvline(x=5, color='orange', linestyle='--', alpha=0.5, linewidth=1.5, label='5 Гц')
         ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-        ax.set_ylabel('$|\\hat{y}(\\nu)|$', fontsize=20, fontweight='bold')
+        ax.set_ylabel('$\\hat{y}(\\nu)$', fontsize=20, fontweight='bold')
         ax.set_xlim(-nu_lim, nu_lim)
         ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
         ax.legend(loc='best', fontsize=14)
@@ -462,17 +490,26 @@ def experiment_y2(dt_sample, T_sampling=10.0, T_display=5.0, save=True):
         nu_lim = 15
         mask_cont = np.abs(results['nu_cont']) <= nu_lim
         mask_rec = np.abs(results['nu_rec']) <= nu_lim
-        ax.plot(results['nu_cont'][mask_cont], np.abs(results['f_cont'][mask_cont]),
-                'b-', linewidth=2.0, label='Спектр исходного сигнала', alpha=0.7)
-        ax.plot(results['nu_rec'][mask_rec], np.abs(results['f_rec'][mask_rec]),
-                'r--', linewidth=2.0, label='Спектр восстановленного сигнала', alpha=0.7)
+        
+        # Исходный сигнал (Re и Im)
+        ax.plot(results['nu_cont'][mask_cont], np.real(results['f_cont'][mask_cont]),
+                'b-', linewidth=2.0, label='Исходный (Re)', alpha=0.7)
+        ax.plot(results['nu_cont'][mask_cont], np.imag(results['f_cont'][mask_cont]),
+                'b--', linewidth=1.5, label='Исходный (Im)', alpha=0.5)
+        
+        # Восстановленный сигнал (Re и Im)
+        ax.plot(results['nu_rec'][mask_rec], np.real(results['f_rec'][mask_rec]),
+                'r-', linewidth=2.0, label='Восстановленный (Re)', alpha=0.7)
+        ax.plot(results['nu_rec'][mask_rec], np.imag(results['f_rec'][mask_rec]),
+                'r--', linewidth=1.5, label='Восстановленный (Im)', alpha=0.5)
+        
         ax.axvline(x=nyquist, color='red', linestyle=':', alpha=0.7, linewidth=2,
                    label=f'Частота Найквиста = {nyquist:.2f} Гц')
         ax.axvline(x=-nyquist, color='red', linestyle=':', alpha=0.7, linewidth=2)
         ax.axvline(x=8, color='green', linestyle='--', alpha=0.5, linewidth=1.5, label='8 Гц')
         ax.axvline(x=-8, color='green', linestyle='--', alpha=0.5, linewidth=1.5)
         ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-        ax.set_ylabel('$|\\hat{y}(\\nu)|$', fontsize=20, fontweight='bold')
+        ax.set_ylabel('$\\hat{y}(\\nu)$', fontsize=20, fontweight='bold')
         ax.set_xlim(-nu_lim, nu_lim)
         ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
         ax.legend(loc='best', fontsize=14)
