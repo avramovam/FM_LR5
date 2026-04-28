@@ -101,23 +101,25 @@ def plot_signal(results, suffix=""):
 
 
 def plot_analytic_spectrum(results, suffix=""):
-    """Построение аналитического спектра (амплитудный и фазовый)"""
+    """Построение аналитического спектра (действительная и мнимая части)"""
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
     nu_lim = 10
     mask = np.abs(results['nu_analytic']) <= nu_lim
     
-    # Амплитудный спектр
-    ax1.plot(results['nu_analytic'][mask], np.abs(results['fourier_analytic'][mask]), 'k-', linewidth=2.5)
+    # Действительная часть
+    ax1.plot(results['nu_analytic'][mask], np.real(results['fourier_analytic'][mask]), 'b-', linewidth=2.5, label='Re')
+    ax1.plot(results['nu_analytic'][mask], np.imag(results['fourier_analytic'][mask]), 'r--', linewidth=2.5, label='Im')
     ax1.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax1.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax1.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax1.set_xlim(-nu_lim, nu_lim)
     ax1.tick_params(axis='both', labelsize=18, width=1.5, length=6)
+    ax1.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax1.grid(True, alpha=0.3, linestyle='--', linewidth=1)
-    ax1.set_title('Амплитудный спектр', fontsize=18, fontweight='bold')
+    ax1.set_title('Спектр: действительная и мнимая части', fontsize=18, fontweight='bold')
     
-    # Фазовый спектр
+    # Фаза
     phase = np.angle(results['fourier_analytic'][mask])
-    ax2.plot(results['nu_analytic'][mask], phase, 'b-', linewidth=2.5)
+    ax2.plot(results['nu_analytic'][mask], phase, 'g-', linewidth=2.5)
     ax2.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
     ax2.set_ylabel('$\\arg(\\hat{\\Pi}(\\nu))$, рад', fontsize=20, fontweight='bold')
     ax2.set_xlim(-nu_lim, nu_lim)
@@ -138,15 +140,22 @@ def plot_analytic_vs_trapz(results, suffix=""):
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_trapz = np.abs(results['nu_trapz']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_trapz'][mask_trapz], np.abs(results['fourier_trapz'][mask_trapz]),
-            'b--', linewidth=2.0, label='Trapz', alpha=0.7)
+    
+    # Действительная часть
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'b-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'b--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    ax.plot(results['nu_trapz'][mask_trapz], np.real(results['fourier_trapz'][mask_trapz]),
+            'r-', linewidth=2.0, label='Trapz (Re)', alpha=0.7)
+    ax.plot(results['nu_trapz'][mask_trapz], np.imag(results['fourier_trapz'][mask_trapz]),
+            'r--', linewidth=1.5, label='Trapz (Im)', alpha=0.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
+    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_analytic_vs_trapz.png", dpi=300, bbox_inches='tight')
@@ -158,15 +167,22 @@ def plot_naive_fft(results, suffix=""):
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
-            'g--', linewidth=2.0, label='Naive FFT', alpha=0.7)
+    
+    # Действительная часть
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'b-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'b--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_naive'][mask_fft]),
+            'g-', linewidth=2.0, label='Naive FFT (Re)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_naive'][mask_fft]),
+            'g--', linewidth=1.5, label='Naive FFT (Im)', alpha=0.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
+    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_naive_fft.png", dpi=300, bbox_inches='tight')
@@ -178,15 +194,22 @@ def plot_unitary_fft(results, suffix=""):
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
-            'm-.', linewidth=2.0, label='Unitary FFT', alpha=0.7)
+    
+    # Действительная часть
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'b-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'b--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_unitary'][mask_fft]),
+            'm-', linewidth=2.0, label='Unitary FFT (Re)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_unitary'][mask_fft]),
+            'm--', linewidth=1.5, label='Unitary FFT (Im)', alpha=0.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
+    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_unitary_fft.png", dpi=300, bbox_inches='tight')
@@ -198,15 +221,22 @@ def plot_analytic_vs_smart(results, suffix=""):
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r--', linewidth=2.0, label='Smart FFT', alpha=0.7)
+    
+    # Действительная часть
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'b-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'b--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.8)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.6)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
+    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_analytic_vs_smart.png", dpi=300, bbox_inches='tight')
@@ -219,21 +249,42 @@ def plot_all_methods_comparison(results, suffix=""):
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
     mask_trapz = np.abs(results['nu_trapz']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
-            'g--', linewidth=2.0, label='Naive FFT', alpha=0.7)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
-            'm-.', linewidth=2.0, label='Unitary FFT', alpha=0.7)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r-', linewidth=2.0, label='Smart FFT', alpha=0.8)
-    ax.plot(results['nu_trapz'][mask_trapz], np.abs(results['fourier_trapz'][mask_trapz]),
-            'b:', linewidth=2.0, label='Trapz', alpha=0.7)
+    
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Naive FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_naive'][mask_fft]),
+            'g-', linewidth=1.5, label='Naive FFT (Re)', alpha=0.6)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_naive'][mask_fft]),
+            'g--', linewidth=1.0, label='Naive FFT (Im)', alpha=0.4)
+    
+    # Unitary FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_unitary'][mask_fft]),
+            'm-', linewidth=1.5, label='Unitary FFT (Re)', alpha=0.6)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_unitary'][mask_fft]),
+            'm--', linewidth=1.0, label='Unitary FFT (Im)', alpha=0.4)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.8)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.6)
+    
+    # Trapz
+    ax.plot(results['nu_trapz'][mask_trapz], np.real(results['fourier_trapz'][mask_trapz]),
+            'b-', linewidth=1.5, label='Trapz (Re)', alpha=0.6)
+    ax.plot(results['nu_trapz'][mask_trapz], np.imag(results['fourier_trapz'][mask_trapz]),
+            'b--', linewidth=1.0, label='Trapz (Im)', alpha=0.4)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
+    ax.legend(loc='best', fontsize=14, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_all_methods_comparison.png", dpi=300, bbox_inches='tight')
@@ -245,16 +296,33 @@ def plot_accuracy_comparison(results, suffix=""):
     nu_lim = 2
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r-', linewidth=2.0, label='Smart FFT', alpha=0.8)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
-            'g--', linewidth=1.5, label='Naive FFT', alpha=0.5)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
-            'm-.', linewidth=1.5, label='Unitary FFT', alpha=0.5)
+    
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.8)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.6)
+    
+    # Naive FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_naive'][mask_fft]),
+            'g-', linewidth=1.5, label='Naive FFT (Re)', alpha=0.5)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_naive'][mask_fft]),
+            'g--', linewidth=1.0, label='Naive FFT (Im)', alpha=0.3)
+    
+    # Unitary FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_unitary'][mask_fft]),
+            'm-', linewidth=1.5, label='Unitary FFT (Re)', alpha=0.5)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_unitary'][mask_fft]),
+            'm--', linewidth=1.0, label='Unitary FFT (Im)', alpha=0.3)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
@@ -288,15 +356,26 @@ def plot_smart_vs_trapz_vs_analytic(results, suffix="", save=True):
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
     mask_trapz = np.abs(results['nu_trapz']) <= nu_lim
 
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_trapz'][mask_trapz], np.abs(results['fourier_trapz'][mask_trapz]),
-            'b--', linewidth=2.0, label='Trapz', alpha=0.7)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r-', linewidth=2.0, label='Smart FFT', alpha=0.8)
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Trapz
+    ax.plot(results['nu_trapz'][mask_trapz], np.real(results['fourier_trapz'][mask_trapz]),
+            'b-', linewidth=2.0, label='Trapz (Re)', alpha=0.7)
+    ax.plot(results['nu_trapz'][mask_trapz], np.imag(results['fourier_trapz'][mask_trapz]),
+            'b--', linewidth=1.5, label='Trapz (Im)', alpha=0.5)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.8)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.6)
 
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
@@ -370,18 +449,39 @@ def plot_all_methods_full(results, suffix=""):
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
     mask_trapz = np.abs(results['nu_trapz']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_naive'][mask_fft]),
-            'g--', linewidth=2.0, label='Naive FFT', alpha=0.7)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_unitary'][mask_fft]),
-            'm-.', linewidth=2.0, label='Unitary FFT', alpha=0.7)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r-', linewidth=2.0, label='Smart FFT', alpha=0.8)
-    ax.plot(results['nu_trapz'][mask_trapz], np.abs(results['fourier_trapz'][mask_trapz]),
-            'b:', linewidth=2.0, label='Trapz', alpha=0.7)
+    
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Naive FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_naive'][mask_fft]),
+            'g-', linewidth=1.5, label='Naive FFT (Re)', alpha=0.6)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_naive'][mask_fft]),
+            'g--', linewidth=1.0, label='Naive FFT (Im)', alpha=0.4)
+    
+    # Unitary FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_unitary'][mask_fft]),
+            'm-', linewidth=1.5, label='Unitary FFT (Re)', alpha=0.6)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_unitary'][mask_fft]),
+            'm--', linewidth=1.0, label='Unitary FFT (Im)', alpha=0.4)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.8)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.6)
+    
+    # Trapz
+    ax.plot(results['nu_trapz'][mask_trapz], np.real(results['fourier_trapz'][mask_trapz]),
+            'b-', linewidth=1.5, label='Trapz (Re)', alpha=0.6)
+    ax.plot(results['nu_trapz'][mask_trapz], np.imag(results['fourier_trapz'][mask_trapz]),
+            'b--', linewidth=1.0, label='Trapz (Im)', alpha=0.4)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=14, framealpha=0.9, prop={'weight': 'bold'})
@@ -395,11 +495,18 @@ def plot_low_resolution_spectrum(results, suffix=""):
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]), 'r-', linewidth=2.0)
+    
+    # Действительная и мнимая части
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Re')
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Im')
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
+    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_low_res_spectrum.png", dpi=300, bbox_inches='tight')
@@ -411,12 +518,21 @@ def plot_low_resolution_comparison(results, suffix=""):
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r--', linewidth=2.0, label='Smart FFT', alpha=0.7)
+    
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
@@ -433,11 +549,18 @@ def plot_aliasing_spectrum(results, suffix=""):
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 10
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]), 'r-', linewidth=2.0)
-    ax.axvline(x=nyquist, color='red', linestyle='--', alpha=0.7, linewidth=2.5, label=f'Частота Найквиста = {nyquist:.2f} Гц')
-    ax.axvline(x=-nyquist, color='red', linestyle='--', alpha=0.7, linewidth=2.5)
+    
+    # Действительная и мнимая части
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Re')
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Im')
+    
+    ax.axvline(x=nyquist, color='blue', linestyle='--', alpha=0.7, linewidth=2.5, label=f'Частота Найквиста = {nyquist:.2f} Гц')
+    ax.axvline(x=-nyquist, color='blue', linestyle='--', alpha=0.7, linewidth=2.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
@@ -452,12 +575,21 @@ def plot_aliasing_comparison(results, suffix=""):
     nu_lim = 10
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r--', linewidth=2.0, label='Smart FFT (искажён)', alpha=0.7)
+    
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
@@ -471,11 +603,18 @@ def plot_zoom_spectrum(results, suffix=""):
     fig, ax = plt.subplots(figsize=(14, 8))
     nu_lim = 2
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]), 'r-', linewidth=2.0)
+    
+    # Действительная и мнимая части
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Re')
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Im')
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
+    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / f"{suffix}_zoom_spectrum.png", dpi=300, bbox_inches='tight')
@@ -487,12 +626,21 @@ def plot_zoom_comparison(results, suffix=""):
     nu_lim = 2
     mask_analytic = np.abs(results['nu_analytic']) <= nu_lim
     mask_fft = np.abs(results['nu_fft']) <= nu_lim
-    ax.plot(results['nu_analytic'][mask_analytic], np.abs(results['fourier_analytic'][mask_analytic]),
-            'k-', linewidth=2.5, label='Аналитический', alpha=0.9)
-    ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
-            'r--', linewidth=2.0, label='Smart FFT', alpha=0.7)
+    
+    # Аналитический
+    ax.plot(results['nu_analytic'][mask_analytic], np.real(results['fourier_analytic'][mask_analytic]),
+            'k-', linewidth=2.5, label='Аналитический (Re)', alpha=0.9)
+    ax.plot(results['nu_analytic'][mask_analytic], np.imag(results['fourier_analytic'][mask_analytic]),
+            'k--', linewidth=2.0, label='Аналитический (Im)', alpha=0.7)
+    
+    # Smart FFT
+    ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
+            'r-', linewidth=2.0, label='Smart FFT (Re)', alpha=0.7)
+    ax.plot(results['nu_fft'][mask_fft], np.imag(results['f_hat_smart'][mask_fft]),
+            'r--', linewidth=1.5, label='Smart FFT (Im)', alpha=0.5)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\hat{\\Pi}(\\nu)$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
     ax.legend(loc='best', fontsize=18, framealpha=0.9, prop={'weight': 'bold'})
@@ -531,14 +679,17 @@ def plot_all_spectra_comparison(all_results):
     for i, results in enumerate(all_results):
         cfg = results['config']
         mask_fft = np.abs(results['nu_fft']) <= nu_lim
-        ax.plot(results['nu_fft'][mask_fft], np.abs(results['f_hat_smart'][mask_fft]),
+        
+        # Действительная часть
+        ax.plot(results['nu_fft'][mask_fft], np.real(results['f_hat_smart'][mask_fft]),
                 color=colors[i % len(colors)], linestyle=line_styles[i % len(line_styles)],
-                linewidth=2.0, label=cfg.name, alpha=0.8)
+                linewidth=2.0, label=f'{cfg.name} (Re)', alpha=0.8)
+    
     ax.set_xlabel('Частота $\\nu$, Гц', fontsize=20, fontweight='bold')
-    ax.set_ylabel('$|\\hat{\\Pi}(\\nu)|$', fontsize=20, fontweight='bold')
+    ax.set_ylabel('$\\text{Re}(\\hat{\\Pi}(\\nu))$', fontsize=20, fontweight='bold')
     ax.set_xlim(-nu_lim, nu_lim)
     ax.tick_params(axis='both', labelsize=18, width=1.5, length=6)
-    ax.legend(loc='best', fontsize=16, framealpha=0.9, prop={'weight': 'bold'})
+    ax.legend(loc='best', fontsize=14, framealpha=0.9, prop={'weight': 'bold'})
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=1)
     plt.tight_layout()
     fig.savefig(RESULTS_DIR / "all_spectra_comparison.png", dpi=300, bbox_inches='tight')
